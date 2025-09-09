@@ -8,8 +8,6 @@ Example usage:
 """
 
 import urllib.request
-import os
-from Bio.PDB import PDBParser
 from protein_rebuilder.sequence_aligner import SequenceAligner
 from protein_rebuilder.structure_modifier import StructureModifier, get_chain_sequence
 from protein_rebuilder.fixer_and_minimizer import FixerMinimizer
