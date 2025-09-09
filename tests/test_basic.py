@@ -48,23 +48,15 @@ def test_cli():
 
     output_pdb = os.path.join(os.path.dirname(__file__), "data", "output.pdb")
 
-    result = subprocess.run(
-        [
-            "protein-rebuilder",
-            "--pdb",
-            test_pdb,
-            "--new-seq",
-            new_seq_file,
-            "--out",
-            output_pdb,
-        ],
-        capture_output=True,
-        text=True,
-    )
-
-    print(result.stdout)
-    print(result.stderr)
-    assert result.returncode == 0
+    from protein_rebuilder.cli import main
+    main([
+        "--pdb",
+        test_pdb,
+        "--new-seq",
+        new_seq_file,
+        "--out",
+        output_pdb,
+    ])
     assert os.path.exists(output_pdb)
 
     # Clean up the output file

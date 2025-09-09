@@ -6,18 +6,11 @@ import random
 from io import StringIO
 import tempfile
 import os
-from Bio.PDB import PDBIO
+from Bio.PDB import PDBIO, Polypeptide
 from openmm import app, unit
 import openmm as mm
 from pdbfixer import PDBFixer
 
-
-def compute_phi_psi(_):
-    """
-    Placeholder for phi/psi calculation.
-    Needs to be implemented.
-    """
-    return (0, 0)
 
 def set_chi_angles_for_residue(_, __):
     """
@@ -66,15 +59,23 @@ class RotamerMC:
         Sample rotamers for the protein.
         """
         k_b = 0.0083144621  # kJ/mol/K
+        chain = self.struct[0]['A']
+        poly = Polypeptide.Polypeptide(chain)
+        phi_psi_list = poly.get_phi_psi_list()
         for _ in range(niter):
             # pick a random residue
-            chain = self.struct[0]['A']
             residues = [r for r in chain.get_residues() if r.get_resname() != 'HOH']
-            residue = random.choice(residues)
-            # compute its backbone phi, psi (using e.g. Bio.PDB calc dihedrals)
-            phi, psi = compute_phi_psi(residue)
+            residue_index, residue = random.choice(list(enumerate(residues)))
+
+            phi, psi = phi_psi_list[residue_index]
+            if phi is None or psi is None:
+                continue
+
+            phi_deg = math.degrees(phi)
+            psi_deg = math.degrees(psi)
+
             resname = residue.get_resname()
-            rotamers = self.dlib.get_rotamers(resname, phi, psi)
+            rotamers = self.dlib.get_rotamers(resname, phi_deg, psi_deg)
             if not rotamers:
                 continue
             choice = random.choices(rotamers, weights=[r['prob'] for r in rotamers])[0]
