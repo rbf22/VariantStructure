@@ -1,5 +1,4 @@
 from Bio.PDB import PDBParser, PDBIO, Select
-import io
 
 def read_pdb_file(pdb_path_or_handle):
     parser = PDBParser(QUIET=True)

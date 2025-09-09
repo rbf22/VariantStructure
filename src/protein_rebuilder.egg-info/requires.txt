@@ -1,0 +1,11 @@
+biopython
+numpy
+pdbfixer@ git+https://github.com/openmm/pdbfixer.git
+openmm
+
+[dev]
+ruff
+pylint
+mypy
+deptry
+pytest

@@ -17,8 +17,6 @@ This implementation is intentionally compact and focuses on correctness for smal
 
 from Bio.PDB import Residue, Atom
 import numpy as np
-from math import cos, sin, radians, acos
-from Bio.PDB.Polypeptide import one_to_three
 
 # Standard backbone geometry (angstroms/degrees)
 BOND_N_CA = 1.458  # N-CA
@@ -59,12 +57,13 @@ def set_dihedral(p0, p1, p2, p3, new_angle_deg):
     v_rot = v * ca + np.cross(axis, v) * sa + axis * np.dot(axis, v) * (1 - ca)
     return p2 + v_rot
 
-def build_peptide_fragment(n_residues, start_CA=np.array([0.0,0.0,0.0]), direction=np.array([1.5,0.0,0.0])):
+def build_peptide_fragment(n_residues, start_CA=np.array([0.0,0.0,0.0]), direction=np.array([1.0,0.0,0.0])):
     """
     Create an initial straight fragment of n_residues backbone coordinates (N,CA,C,O) using ideal geometry.
     Returns list of residues where each residue is dict of atom name -> 3-vector.
     """
     residues = []
+    direction = norm(direction)
     # We'll place CA atoms along direction spaced by ~3.8 A
     ca_sep = 3.8
     for i in range(n_residues):
@@ -81,7 +80,6 @@ def residues_to_biopy(res_dicts, start_resseq=1, resname='GLY'):
     Convert residue dictionaries to Bio.PDB Residue objects (with Atom objects).
     Only backbone atoms are added; element names are inferred.
     """
-    from Bio.PDB import Residue, Atom
     bio_residues = []
     for i, rd in enumerate(res_dicts):
         rid = (' ', start_resseq + i, ' ')
@@ -107,6 +105,8 @@ def ccd_close_loop(insert_coords, anchor_prev_coords, anchor_next_coords, max_it
     # For better control, we rotate about virtual bonds affecting positions after that bond.
     # We'll operate by adjusting phi (rotation of N-CA-C atoms) — simplified:
     target = anchor_next_coords['N']
+    if target is None:
+        return
     for it in range(max_iter):
         end_CA = insert_coords[-1]['CA']
         dist = length(end_CA - target)

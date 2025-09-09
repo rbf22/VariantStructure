@@ -1,17 +1,45 @@
+"""
+A Monte Carlo sampler for protein side-chain rotamers.
+"""
+import math
+import random
+from io import StringIO
+import tempfile
+import os
+from Bio.PDB import PDBIO
 from openmm import app, unit
 import openmm as mm
-import numpy as np
-import random
+from pdbfixer import PDBFixer
+
+
+def compute_phi_psi(_):
+    """
+    Placeholder for phi/psi calculation.
+    Needs to be implemented.
+    """
+    return (0, 0)
+
+def set_chi_angles_for_residue(_, __):
+    """
+    Placeholder for setting chi angles.
+    Needs to be implemented.
+    """
 
 class RotamerMC:
+    """
+    A Monte Carlo sampler for protein side-chain rotamers.
+    """
     def __init__(self, biopy_struct, dunbrack_lib, temperature=300):
         self.struct = biopy_struct
         self.dlib = dunbrack_lib
         self.temperature = temperature
         # Build OpenMM system & context once
-        fixer = PDBFixer(pdbfile=None)
-        fixer.readPDB(self._write_pdb_text(self.struct))
-        fixer.findMissingAtoms(); fixer.addMissingAtoms(); fixer.addMissingHydrogens(7.0)
+        sio = StringIO(self._write_pdb_text(self.struct))
+        fixer = PDBFixer(pdbfile=sio)
+        fixer.findMissingResidues()
+        fixer.findMissingAtoms()
+        fixer.addMissingAtoms()
+        fixer.addMissingHydrogens(7.0)
         ff = app.ForceField('amber14-all.xml', 'amber14/tip3p.xml')
         self.topo = fixer.topology
         self.positions = fixer.positions
@@ -23,25 +51,26 @@ class RotamerMC:
         self.current_energy = state.getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole)
 
     def _write_pdb_text(self, struct):
-        import tempfile
-        from Bio.PDB import PDBIO
-        fh = tempfile.NamedTemporaryFile(delete=False, suffix=".pdb")
-        fh.close()
-        io = PDBIO()
-        io.set_structure(struct)
-        io.save(fh.name)
-        txt = open(fh.name).read()
-        import os
-        os.remove(fh.name)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdb", mode="w", encoding="utf-8") as fh:
+            io = PDBIO()
+            io.set_structure(struct)
+            io.save(fh.name)
+            tmpname = fh.name
+        with open(tmpname, "r", encoding="utf-8") as f:
+            txt = f.read()
+        os.remove(tmpname)
         return txt
 
     def sample(self, niter=500):
-        kB = 0.0083144621  # kJ/mol/K
-        model = self.struct[0]
-        for it in range(niter):
+        """
+        Sample rotamers for the protein.
+        """
+        k_b = 0.0083144621  # kJ/mol/K
+        for _ in range(niter):
             # pick a random residue
-            # (chain, resid) selection omitted for brevity
-            residue = ...
+            chain = self.struct[0]['A']
+            residues = [r for r in chain.get_residues() if r.get_resname() != 'HOH']
+            residue = random.choice(residues)
             # compute its backbone phi, psi (using e.g. Bio.PDB calc dihedrals)
             phi, psi = compute_phi_psi(residue)
             resname = residue.get_resname()
@@ -55,10 +84,10 @@ class RotamerMC:
             set_chi_angles_for_residue(residue, choice['chi'])
             # evaluate energy
             state = self.sim.context.getState(getEnergy=True)
-            E_new = state.getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole)
-            dE = E_new - self.current_energy
-            if dE <= 0 or random.random() < math.exp(-dE/(kB*self.temperature)):
-                self.current_energy = E_new
+            e_new = state.getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole)
+            d_e = e_new - self.current_energy
+            if d_e <= 0 or random.random() < math.exp(-d_e/(k_b*self.temperature)):
+                self.current_energy = e_new
             else:
                 # revert
                 for atom in residue:

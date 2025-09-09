@@ -1,26 +1,38 @@
-from Bio.PDB.Polypeptide import three_to_one, one_to_three
+"""
+Modify a protein structure based on a new sequence.
+"""
+from Bio.Data.PDBData import protein_letters_3to1, protein_letters_1to3
 from Bio.PDB import Model, Chain, Residue, Atom
 import numpy as np
 from .ccd_loop_builder import build_peptide_fragment, residues_to_biopy, ccd_close_loop
 
 def get_chain_sequence(chain):
+    """
+    Get the amino acid sequence of a chain.
+    """
     seq = []
     res_list = []
     for res in chain:
         try:
-            aa = three_to_one(res.get_resname())
-        except Exception:
+            aa = protein_letters_3to1[res.get_resname()]
+        except KeyError:
             aa = 'X'
         seq.append(aa)
         res_list.append(res)
     return ''.join(seq), res_list
 
 class StructureModifier:
+    """
+    Modifies a protein structure based on a new sequence.
+    """
     def __init__(self, structure, chain_id='A'):
         self.structure = structure
         self.chain_id = chain_id
 
     def build_modified_structure(self, aligned_ref, aligned_new):
+        """
+        Build a new structure based on the alignment of the reference and new sequences.
+        """
         model = self.structure[0]
         if self.chain_id not in model:
             raise KeyError(f"Chain {self.chain_id} not found")
@@ -37,12 +49,11 @@ class StructureModifier:
         for r in ref_residues:
             ca = None
             if 'CA' in r:
-                ca = np.array(r['CA'].get_vector(), dtype=float)
+                ca = np.array(r['CA'].get_vector().get_array(), dtype=float)
             ca_positions.append(ca)
 
         # We'll collect inserted residue blocks to perform CCD closure when we reach next anchor
         insertion_block = []  # list of single-letter aa for current insertion
-        insertion_before_anchor_idx = None
 
         def flush_insertion(block, anchor_prev_idx, anchor_next_idx):
             # called when we have a completed insertion block (one or more residues)
@@ -54,23 +65,23 @@ class StructureModifier:
             next_ca = ca_positions[anchor_next_idx] if anchor_next_idx is not None else None
 
             # Build initial fragment
-            start_CA = prev_ca if prev_ca is not None else (next_ca - np.array([n_ins*3.8,0,0]) if next_ca is not None else np.array([0.,0.,0.]))
-            frag = build_peptide_fragment(n_ins, start_CA=start_CA)
+            start_ca = prev_ca if prev_ca is not None else (next_ca - np.array([n_ins*3.8,0,0]) if next_ca is not None else np.array([0.,0.,0.]))
+            frag = build_peptide_fragment(n_ins, start_CA=start_ca)
             # Prepare anchor coords as dictionaries
             anchor_prev_coords = {'CA': prev_ca} if prev_ca is not None else None
             anchor_next_coords = {'N': None, 'CA': next_ca, 'C': None} if next_ca is not None else {'CA': None}
 
             # If both anchors are present, run CCD to try to close
             if prev_ca is not None and next_ca is not None:
-                ok = ccd_close_loop(frag, anchor_prev_coords, anchor_next_coords)
+                ccd_close_loop(frag, anchor_prev_coords, anchor_next_coords)
                 # we ignore ok/fail for now; proceed with built fragment
             # Convert to biopy residues
             bio_res = residues_to_biopy(frag, start_resseq=1, resname='GLY')
             # rename residues according to block amino acids (change resname)
             for i, aa in enumerate(block):
                 try:
-                    three = one_to_three(aa)
-                except Exception:
+                    three = protein_letters_1to3[aa]
+                except KeyError:
                     three = 'GLY'
                 bio_res[i].resname = three
             return bio_res
@@ -103,8 +114,8 @@ class StructureModifier:
                 # rename if needed
                 if a_ref != a_new:
                     try:
-                        new_res.resname = one_to_three(a_new)
-                    except Exception:
+                        new_res.resname = protein_letters_1to3[a_new]
+                    except KeyError:
                         pass
                 new_chain.add(new_res)
                 ref_index += 1

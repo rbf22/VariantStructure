@@ -1,30 +1,42 @@
+"""
+Fix and minimize a protein structure.
+"""
+import os
+import tempfile
+from io import StringIO
 from pdbfixer import PDBFixer
 from openmm import app, unit
 import openmm as mm
-import tempfile, os
 from Bio.PDB import PDBIO
 
 def biopy_structure_to_pdb_text(structure):
-    fh = tempfile.NamedTemporaryFile(delete=False, suffix=".pdb")
-    tmpname = fh.name
-    fh.close()
+    """
+    Convert a Biopython structure to a PDB file string.
+    """
     io = PDBIO()
     io.set_structure(structure)
-    io.save(tmpname)
-    with open(tmpname, 'r') as f:
-        pdb_text = f.read()
-    os.remove(tmpname)
-    return pdb_text
+    sio = StringIO()
+    io.save(sio)
+    return sio.getvalue()
 
 class FixerMinimizer:
+    """
+    A class to fix and minimize a protein structure.
+    """
     def __init__(self, ph=7.0, platform_name=None):
+        """
+        Initialize the FixerMinimizer.
+        """
         self.ph = ph
         self.platform_name = platform_name
 
     def fix_and_minimize(self, biopy_struct, keep_water=True, niter_minimize=500, restrain_calpha=True):
+        """
+        Fix and minimize a protein structure.
+        """
         pdb_text = biopy_structure_to_pdb_text(biopy_struct)
-        fixer = PDBFixer(pdbfile=None)
-        fixer.readPDB(pdb_text)
+        sio = StringIO(pdb_text)
+        fixer = PDBFixer(pdbfile=sio)
         fixer.findMissingResidues()
         fixer.findMissingAtoms()
         fixer.addMissingAtoms()
@@ -35,10 +47,15 @@ class FixerMinimizer:
         positions = fixer.positions
 
         forcefield = app.ForceField('amber14-all.xml', 'amber14/tip3p.xml')
-        system = forcefield.createSystem(topology,
-                                         nonbondedMethod=app.PME,
-                                         nonbondedCutoff=1.0*unit.nanometer,
-                                         constraints=app.HBonds)
+        if topology.getPeriodicBoxVectors():
+            system = forcefield.createSystem(topology,
+                                             nonbondedMethod=app.PME,
+                                             nonbondedCutoff=1.0*unit.nanometer,
+                                             constraints=app.HBonds)
+        else:
+            system = forcefield.createSystem(topology,
+                                             nonbondedMethod=app.NoCutoff,
+                                             constraints=app.HBonds)
 
         if restrain_calpha:
             from openmm import CustomExternalForce
@@ -46,6 +63,7 @@ class FixerMinimizer:
             restraint = CustomExternalForce("0.5 * k * ((x - x0)^2 + (y - y0)^2 + (z - z0)^2)")
             restraint.addPerParticleParameter("x0")
             restraint.addPerParticleParameter("y0")
+            restraint.addPerParticleParameter("z0")
             restraint.addGlobalParameter("k", k_rest)
             for atom in topology.atoms():
                 if atom.name == "CA":
@@ -54,7 +72,7 @@ class FixerMinimizer:
                     restraint.addParticle(idx, [pos.x, pos.y, pos.z])
             system.addForce(restraint)
 
-        integrator = app.LangevinIntegrator(300*unit.kelvin, 1.0/unit.picoseconds, 0.002*unit.picoseconds)
+        integrator = mm.LangevinIntegrator(300*unit.kelvin, 1.0/unit.picosecond, 0.002*unit.picoseconds)
         platform = None
         if self.platform_name:
             platform = mm.Platform.getPlatformByName(self.platform_name)
@@ -65,11 +83,11 @@ class FixerMinimizer:
         state = simulation.context.getState(getPositions=True, enforcePeriodicBox=False)
         minimized_positions = state.getPositions()
 
-        out_pdb_path = tempfile.NamedTemporaryFile(delete=False, suffix=".pdb").name
-        with open(out_pdb_path, 'w') as f:
-            app.PDBFile.writeFile(simulation.topology, minimized_positions, f)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdb", mode="w", encoding="utf-8") as out_pdb_path:
+            app.PDBFile.writeFile(simulation.topology, minimized_positions, out_pdb_path)
+            temp_name = out_pdb_path.name
 
-        with open(out_pdb_path, 'r') as f:
+        with open(temp_name, 'r', encoding="utf-8") as f:
             out_pdb_text = f.read()
-        os.remove(out_pdb_path)
+        os.remove(temp_name)
         return out_pdb_text

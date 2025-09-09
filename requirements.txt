@@ -1,4 +1,0 @@
-biopython
-numpy
-pdbfixer
-openmm
