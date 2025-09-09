@@ -1,4 +1,3 @@
-# protein_rebuilder/io_helpers.py
 from Bio.PDB import PDBParser, PDBIO, Select
 import io
 
