@@ -1,5 +1,5 @@
 """A module for loading the Dunbrack rotamer library."""
-import tarfile
+
 import os
 import collections
 import numpy as np
@@ -38,35 +38,54 @@ class DunbrackLibrary:
 
     def _load_rotamer_library(self):
         """
-        Loads the rotamer library from the tarball.
+        Loads the rotamer library from the dunbrack-rotamer directory.
         """
         amino_acids = [
-            "arg", "asn", "asp", "cys", "gln", "glu", "his", "ile",
-            "leu", "lys", "met", "phe", "pro", "ser", "thr", "trp",
-            "tyr", "val",
+            "arg",
+            "asn",
+            "asp",
+            "cys",
+            "gln",
+            "glu",
+            "his",
+            "ile",
+            "leu",
+            "lys",
+            "met",
+            "phe",
+            "pro",
+            "ser",
+            "thr",
+            "trp",
+            "tyr",
+            "val",
         ]
         db = {}
 
-        data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
-        tar_path = os.path.join(data_dir, "dunbrack_rotamer.tar.gz")
+        lib_path = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "dunbrack-rotamer",
+            "original",
+            "ExtendedOpt3-5",
+            "ALL.bbdep.rotamers.lib",
+        )
 
         try:
-            with tarfile.open(tar_path, "r:gz") as tar:
-                lib_path = "dunbrack-rotamer/original/SimpleOpt1-0/ALL.bbdep.rotamers.lib"
-                f = tar.extractfile(lib_path)
-                if f is not None:
-                    df = pd.read_csv(
-                        f,
-                        names=list(self._COLUMNS.keys()),
-                        dtype=self._COLUMNS,
-                        comment="#",
-                        sep=r"\s+",
-                        engine="c",
-                    )
-                    for amino_acid in amino_acids:
-                        db[amino_acid.upper()] = df[df["T"] == amino_acid.upper()]
-        except (KeyError, FileNotFoundError, tarfile.ReadError) as e:
-            print(f"Warning: Could not load rotamer library from {tar_path}. Error: {e}")
+            df = pd.read_csv(
+                lib_path,
+                names=list(self._COLUMNS.keys()),
+                dtype=self._COLUMNS,
+                comment="#",
+                sep=r"\s+",
+                engine="c",
+            )
+            for amino_acid in amino_acids:
+                db[amino_acid.upper()] = df[df["T"] == amino_acid.upper()]
+        except FileNotFoundError as e:
+            print(
+                f"Warning: Could not load rotamer library from {lib_path}. Error: {e}"
+            )
         return db
 
     def get_rotamers(  # pylint: disable=too-many-arguments
