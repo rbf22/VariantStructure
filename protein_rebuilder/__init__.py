@@ -1,6 +1,7 @@
 """
 Protein Rebuilder
 """
+
 __version__ = "0.1"
 from .sequence_aligner import SequenceAligner
 from .structure_modifier import StructureModifier

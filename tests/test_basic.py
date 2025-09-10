@@ -1,8 +1,8 @@
 import os
-import subprocess
 from protein_rebuilder.io_helpers import read_pdb_file
 from protein_rebuilder.sequence_aligner import SequenceAligner
 from protein_rebuilder.structure_modifier import StructureModifier, get_chain_sequence
+
 
 def test_read_pdb():
     """
@@ -12,14 +12,16 @@ def test_read_pdb():
     struct = read_pdb_file(test_pdb)
     assert struct is not None
 
+
 def test_alignment_simple():
     """
     Test a simple sequence alignment.
     """
     ref = "MKT"
     new = "MKT"
-    a_ref,a_new = SequenceAligner(ref,new).align()
-    assert a_ref.replace('-','') == ref
+    a_ref, a_new = SequenceAligner(ref, new).align()
+    assert a_ref.replace("-", "") == ref
+
 
 def test_structure_modifier_smoke():
     """
@@ -27,14 +29,15 @@ def test_structure_modifier_smoke():
     """
     test_pdb = os.path.join(os.path.dirname(__file__), "data", "4EFL_snippet.pdb")
     struct = read_pdb_file(test_pdb)
-    chain = struct[0]['A']
+    chain = struct[0]["A"]
     ref_seq, _ = get_chain_sequence(chain)
     # create new seq with a small insertion
     new_seq = ref_seq[:2] + "GG" + ref_seq[2:]
-    a_ref,a_new = SequenceAligner(ref_seq, new_seq).align()
-    mod = StructureModifier(struct, chain_id='A')
-    new_struct = mod.build_modified_structure(a_ref,a_new)
+    a_ref, a_new = SequenceAligner(ref_seq, new_seq).align()
+    mod = StructureModifier(struct, chain_id="A")
+    new_struct = mod.build_modified_structure(a_ref, a_new)
     assert new_struct is not None
+
 
 def test_cli():
     """
@@ -49,14 +52,17 @@ def test_cli():
     output_pdb = os.path.join(os.path.dirname(__file__), "data", "output.pdb")
 
     from protein_rebuilder.cli import main
-    main([
-        "--pdb",
-        test_pdb,
-        "--new-seq",
-        new_seq_file,
-        "--out",
-        output_pdb,
-    ])
+
+    main(
+        [
+            "--pdb",
+            test_pdb,
+            "--new-seq",
+            new_seq_file,
+            "--out",
+            output_pdb,
+        ]
+    )
     assert os.path.exists(output_pdb)
 
     # Clean up the output file

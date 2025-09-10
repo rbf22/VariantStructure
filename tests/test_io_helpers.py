@@ -1,6 +1,7 @@
 import os
 from protein_rebuilder.io_helpers import read_pdb_file, write_pdb_file
 
+
 def test_write_pdb_file():
     """
     Test that a PDB file can be written.
