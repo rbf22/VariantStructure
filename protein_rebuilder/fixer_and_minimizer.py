@@ -22,7 +22,7 @@ def biopy_structure_to_pdb_text(structure):
     return sio.getvalue()
 
 
-class FixerMinimizer:
+class FixerMinimizer:  # pylint: disable=too-few-public-methods
     """
     A class to fix and minimize a protein structure.
     """

@@ -30,9 +30,24 @@ def test_all_amino_acids_have_rotamers():
     """
     lib = DunbrackLibrary()
     amino_acids = [
-        "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "HIS", "ILE",
-        "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP",
-        "TYR", "VAL",
+        "ARG",
+        "ASN",
+        "ASP",
+        "CYS",
+        "GLN",
+        "GLU",
+        "HIS",
+        "ILE",
+        "LEU",
+        "LYS",
+        "MET",
+        "PHE",
+        "PRO",
+        "SER",
+        "THR",
+        "TRP",
+        "TYR",
+        "VAL",
     ]
     for aa in amino_acids:
         rotamers = lib.get_rotamers(aa, -60, 140)

@@ -5,7 +5,7 @@ A simple sequence aligner using Biopython's pairwise2 module.
 from Bio import pairwise2
 
 
-class SequenceAligner:
+class SequenceAligner:  # pylint: disable=too-few-public-methods
     """
     A class to align two sequences.
     """

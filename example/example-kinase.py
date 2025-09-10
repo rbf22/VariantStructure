@@ -5,7 +5,7 @@ Example usage with a kinase (Wee1) from PDB 9D0R.
 - Reads chain A sequence
 - Demonstrates various modifications and rebuilding.
 """
-import os
+
 import urllib.request
 from Bio.PDB import MMCIFParser, PDBParser
 from protein_rebuilder.sequence_aligner import SequenceAligner
@@ -24,20 +24,21 @@ def download_structure(pdb_id, outpath=None):
 
     try:
         urllib.request.urlretrieve(url, outpath)
-        return outpath, 'cif'
+        return outpath, "cif"
     except urllib.error.HTTPError as e:
         if e.code == 404:
             print(f"CIF format for {pdb_id} not found, trying PDB format.")
             url = f"https://files.rcsb.org/download/{pdb_id}.pdb"
             pdb_outpath = f"{pdb_id}.pdb"
             urllib.request.urlretrieve(url, pdb_outpath)
-            return pdb_outpath, 'pdb'
+            return pdb_outpath, "pdb"
         else:
             raise e
 
+
 def read_structure_file(filepath, file_format):
     """Read a structure file (PDB or CIF) and return a Bio.PDB.Structure object."""
-    if file_format == 'cif':
+    if file_format == "cif":
         parser = MMCIFParser()
     else:
         parser = PDBParser(QUIET=True)
@@ -87,20 +88,32 @@ def main():
     # --- Example 1: Missense alteration (e.g., T450A) ---
     res_to_mutate = 450
     idx_to_mutate = resseq_to_idx.get(res_to_mutate)
-    if idx_to_mutate is not None and len(ref_seq) > idx_to_mutate and ref_seq[idx_to_mutate] == 'T':
+    if (
+        idx_to_mutate is not None
+        and len(ref_seq) > idx_to_mutate
+        and ref_seq[idx_to_mutate] == "T"
+    ):
         new_chars = list(ref_seq)
-        new_chars[idx_to_mutate] = 'A'
+        new_chars[idx_to_mutate] = "A"
         new_seq_missense = "".join(new_chars)
-        run_modification(struct, chain_id, ref_seq, new_seq_missense, "9d0r_missense_T450A.pdb")
+        run_modification(
+            struct, chain_id, ref_seq, new_seq_missense, "9d0r_missense_T450A.pdb"
+        )
 
     # --- Example 2: Insertion (insert 'AGG' after residue 400) ---
     res_to_insert_after = 400
     idx_to_insert_after = resseq_to_idx.get(res_to_insert_after)
     if idx_to_insert_after is not None:
         new_chars = list(ref_seq)
-        new_chars = new_chars[:idx_to_insert_after + 1] + list("AGG") + new_chars[idx_to_insert_after + 1:]
+        new_chars = (
+            new_chars[: idx_to_insert_after + 1]
+            + list("AGG")
+            + new_chars[idx_to_insert_after + 1 :]
+        )
         new_seq_insertion = "".join(new_chars)
-        run_modification(struct, chain_id, ref_seq, new_seq_insertion, "9d0r_insertion_400AGG.pdb")
+        run_modification(
+            struct, chain_id, ref_seq, new_seq_insertion, "9d0r_insertion_400AGG.pdb"
+        )
 
     # --- Example 3: Deletion (delete residues 350-355) ---
     res_del_start = 350
@@ -111,7 +124,9 @@ def main():
         new_chars = list(ref_seq)
         del new_chars[idx_del_start : idx_del_end + 1]
         new_seq_deletion = "".join(new_chars)
-        run_modification(struct, chain_id, ref_seq, new_seq_deletion, "9d0r_deletion_350-355.pdb")
+        run_modification(
+            struct, chain_id, ref_seq, new_seq_deletion, "9d0r_deletion_350-355.pdb"
+        )
 
     # --- Example 4: N-terminal truncation (remove first 10 residues) ---
     new_seq_n_trunc = ref_seq[10:]
@@ -123,22 +138,32 @@ def main():
 
     # --- Example 6: Combination of alterations ---
     # T450A mutation, deletion of 350-355, and C-terminal truncation of 5 residues
-    if (idx_to_mutate is not None and len(ref_seq) > idx_to_mutate and ref_seq[idx_to_mutate] == 'T' and
-        idx_del_start is not None and idx_del_end is not None):
-
+    if (
+        idx_to_mutate is not None
+        and len(ref_seq) > idx_to_mutate
+        and ref_seq[idx_to_mutate] == "T"
+        and idx_del_start is not None
+        and idx_del_end is not None
+    ):
         new_chars = list(ref_seq)
         del new_chars[idx_del_start : idx_del_end + 1]
 
         idx_mut_shifted = resseq_to_idx.get(res_to_mutate)
         if idx_mut_shifted is not None and idx_mut_shifted > idx_del_end:
-             idx_mut_shifted = idx_mut_shifted - (idx_del_end - idx_del_start + 1)
+            idx_mut_shifted = idx_mut_shifted - (idx_del_end - idx_del_start + 1)
 
-        if idx_mut_shifted is not None and len(new_chars) > idx_mut_shifted and new_chars[idx_mut_shifted] == 'T':
-            new_chars[idx_mut_shifted] = 'A'
+        if (
+            idx_mut_shifted is not None
+            and len(new_chars) > idx_mut_shifted
+            and new_chars[idx_mut_shifted] == "T"
+        ):
+            new_chars[idx_mut_shifted] = "A"
 
         new_seq_combo = "".join(new_chars)
         new_seq_combo = new_seq_combo[:-5]
-        run_modification(struct, chain_id, ref_seq, new_seq_combo, "9d0r_combination.pdb")
+        run_modification(
+            struct, chain_id, ref_seq, new_seq_combo, "9d0r_combination.pdb"
+        )
 
 
 if __name__ == "__main__":
