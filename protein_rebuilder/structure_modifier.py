@@ -24,7 +24,7 @@ def get_chain_sequence(chain):
     return "".join(seq), res_list
 
 
-class StructureModifier:
+class StructureModifier:  # pylint: disable=too-few-public-methods
     """
     Modifies a protein structure based on a new sequence.
     """

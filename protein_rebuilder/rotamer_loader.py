@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 
-class DunbrackLibrary:
+class DunbrackLibrary:  # pylint: disable=too-few-public-methods
     """
     Parses and stores the Dunbrack rotamer library.
     """
@@ -88,9 +88,8 @@ class DunbrackLibrary:
             )
         return db
 
-    def get_rotamers(  # pylint: disable=too-many-arguments
-        self, three_letter, phi, psi, dphi=10, dpsi=10
-    ):
+    # pylint: disable=too-many-arguments
+    def get_rotamers(self, three_letter, phi, psi, dphi=10, dpsi=10):
         """
         Return list of rotamers whose phi,psi bins are within dphi, dpsi of given angles.
         """

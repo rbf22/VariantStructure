@@ -99,3 +99,7 @@ def main(argv=None):
 
     write_pdb_file(final_struct, args.out)
     print("Wrote:", args.out)
+
+
+if __name__ == "__main__":
+    main()
