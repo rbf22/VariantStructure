@@ -81,7 +81,9 @@ class StructureModifier:
         )
         frag = build_peptide_fragment(n_ins, start_ca=start_ca)
         anchor_next_coords = (
-            {"N": None, "CA": next_ca, "C": None} if next_ca is not None else {"CA": None}
+            {"N": None, "CA": next_ca, "C": None}
+            if next_ca is not None
+            else {"CA": None}
         )
 
         if prev_ca is not None and next_ca is not None:
@@ -110,7 +112,9 @@ class StructureModifier:
         ref_index = 0
         new_res_id = 1
         self.ca_positions = [
-            np.array(r["CA"].get_vector().get_array(), dtype=float) if "CA" in r else None
+            np.array(r["CA"].get_vector().get_array(), dtype=float)
+            if "CA" in r
+            else None
             for r in ref_residues
         ]
         insertion_block = []
