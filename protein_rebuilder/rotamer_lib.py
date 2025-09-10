@@ -2,6 +2,7 @@
 A library for working with rotamers.
 """
 
+
 def get_rotamers_for_resname(_):
     """
     Get rotamers for a given residue name.

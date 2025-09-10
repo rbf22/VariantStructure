@@ -1,5 +1,6 @@
 from protein_rebuilder.sequence_aligner import SequenceAligner
 
+
 def test_sequence_aligner():
     """
     Test the SequenceAligner class.

@@ -3,6 +3,7 @@ from protein_rebuilder.io_helpers import read_pdb_file
 from protein_rebuilder.rotamer_sampler import RotamerMC
 from protein_rebuilder.rotamer_loader import DunbrackLibrary
 
+
 def test_rotamer_mc():
     """
     Test the RotamerMC class.

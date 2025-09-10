@@ -2,6 +2,7 @@ import tarfile
 import pathlib
 import subprocess
 
+
 def main():
     root = pathlib.Path(__file__).resolve().parents[2]
     tarball = root / "data" / "bbdep02.May2010.tar.gz"
