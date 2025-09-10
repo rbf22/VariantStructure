@@ -1,0 +1,3 @@
+Extended Mode: the rotameric residue types are modeled with rotamers only while the non-rotameric residue types are described in terms of chi(n) discrete rotamers (as in the case of Simple Mode for backward compatibility) and chi(n) densities. The chi(n) rotamer definitions for the non-rotameric residues are fixed, i.e. backbone-independent, meaning their bin positions are the same across all phi and psi values.
+
+All 18 standard amino acids are treated as rotamers only and are stored in a single file. The chi(n) rotamer definitions for the 8 non-rotameric residue types are backbone-independent and also included as 8 smaller files.
